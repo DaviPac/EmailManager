@@ -54,6 +54,21 @@ public class MessagesController(AppDbContext db, IAttachmentStorage storage) : C
         ));
     }
 
+    [HttpDelete("messages/{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var linhasAfetadas = await db.Messages
+            .Where(m => m.Id == id)
+            .ExecuteDeleteAsync();
+
+        if (linhasAfetadas == 0)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
+    }
+
     [HttpGet("messages/{id:guid}/attachments/{attachmentId:guid}")]
     public async Task<IActionResult> Download(Guid id, Guid attachmentId)
     {
