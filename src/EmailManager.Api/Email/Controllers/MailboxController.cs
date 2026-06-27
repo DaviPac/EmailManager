@@ -55,9 +55,9 @@ public class MailboxesController(AppDbContext db, IConfiguration config) : Contr
     [HttpHead("mailboxes/check-address")]
     public async Task<IActionResult> CheckAddressHead([FromQuery] string address)
     {
-        if (string.IsNullOrWhiteSpace(address)) return BadRequest();
+        var fullAddress =  $"{address.Trim().ToLowerInvariant()}@{config["Domain"]}";
 
-        var exists = await db.Mailboxes.AnyAsync(m => m.Address == address);
+        var exists = await db.Mailboxes.AnyAsync(m => m.Address == fullAddress);
 
         if (exists)
         {
