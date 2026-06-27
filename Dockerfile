@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # csproj primeiro, pra cachear o restore
-COPY EmailManager.sln .
+COPY EmailManager.slnx .
 COPY src/EmailManager.Domain/*.csproj         src/EmailManager.Domain/
 COPY src/EmailManager.Application/*.csproj     src/EmailManager.Application/
 COPY src/EmailManager.Infrastructure/*.csproj  src/EmailManager.Infrastructure/
