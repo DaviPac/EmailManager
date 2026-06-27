@@ -1,5 +1,7 @@
+using EmailManager.Api.Hubs;
 using EmailManager.Infrastructure;
 using EmailManager.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +30,23 @@ builder.Services
     .AddEntityFrameworkStores<AppDbContext>();
 builder.Services.AddAuthorization();
 
+builder.Services.AddSignalR();
+
+builder.Services.Configure<BearerTokenOptions>(IdentityConstants.BearerScheme, options =>
+{
+    options.Events = new BearerTokenEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                context.Token = accessToken;
+            return Task.CompletedTask;
+        }
+    };
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -43,4 +62,5 @@ app.UseAuthorization();
 
 app.MapIdentityApi<IdentityUser>();
 app.MapControllers();
+app.MapHub<NotificationsHub>("/hubs/notifications");
 app.Run();

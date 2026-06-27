@@ -1,8 +1,10 @@
 using System.Text.Json;
+using EmailManager.Api.Hubs;
 using EmailManager.Application.Abstractions;
 using EmailManager.Domain.Email;
 using EmailManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmailManager.Api.Email.Controllers;
@@ -10,7 +12,8 @@ namespace EmailManager.Api.Email.Controllers;
 [ApiController]
 [Route("webhooks/sendgrid")]
 public class InboundController(
-    AppDbContext db, IConfiguration config, IAttachmentStorage storage) : ControllerBase
+    AppDbContext db, IConfiguration config, IAttachmentStorage storage,
+    IHubContext<NotificationsHub> hub) : ControllerBase
 {
     private record Envelope(string[] To, string From);
 
@@ -35,6 +38,8 @@ public class InboundController(
 
         if (mailboxes.Count == 0)
             return Ok();
+
+        var saved = new List<(string UserId, EmailMessage Msg)>();
 
         foreach (var mailbox in mailboxes)
         {
@@ -66,6 +71,15 @@ public class InboundController(
             }
 
             db.Messages.Add(message);
+            saved.Add((mailbox.UserId, message));
+
+            foreach (var (userId, msg) in saved)
+            {
+                await hub.Clients.User(userId).SendAsync("newMessage", new
+                {
+                    msg.Id, msg.MailboxId, msg.From, msg.Subject, msg.ReceivedAt
+                });
+            }
         }
 
         await db.SaveChangesAsync();
