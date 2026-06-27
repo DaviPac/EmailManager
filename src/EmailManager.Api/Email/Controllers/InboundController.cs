@@ -30,7 +30,7 @@ public class InboundController(
             form["envelope"].ToString(),
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-        var recipients = envelope?.To ?? [];
+        var recipients = envelope?.To.Select(a => a.ToLowerInvariant()) ?? [];
 
         var mailboxes = await db.Mailboxes
             .Where(m => recipients.Contains(m.Address))
