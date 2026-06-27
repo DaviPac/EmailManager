@@ -38,6 +38,9 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("Frontend");
 
+app.UseAuthentication(); 
+app.UseAuthorization();
+
 app.MapIdentityApi<IdentityUser>();
 app.MapControllers();
 app.Run();
